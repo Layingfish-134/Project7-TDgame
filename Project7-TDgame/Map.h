@@ -1,11 +1,13 @@
 #pragma once
 #include"Tile.h"
+#include"Route.h"
 #include<SDL.h>
 
 #include<fstream>
 #include<sstream>
 #include<string>
 #include<iostream>
+#include<unordered_map>
 
 class Map
 {
@@ -13,6 +15,8 @@ public:
 	Map() = default;
 	~Map() = default;
 
+public:
+	typedef std::unordered_map<int, Route> SpawnerRoutePool;
 public:
 	int get_width() const
 	{
@@ -27,6 +31,26 @@ public:
 			return 0;
 
 		return tile_map.size();
+	}
+
+	const Tilemap& get_tile_map() const
+	{
+		return tile_map;
+	}
+
+	const SDL_Point& get_home_idx() const
+	{
+		return idx_home;
+	}
+
+	const SpawnerRoutePool& get_route_pool() const
+	{
+		return spawner_route_pool;
+	}
+
+	void place_tower(const SDL_Point& idx)
+	{
+		tile_map[idx.y][idx.x].has_tower = true;
 	}
 private:
 	//解析csv文件得到瓦片地图
@@ -66,7 +90,7 @@ private:
 			{
 				idx_x++;
 				tile_temp_map[idx_y].emplace_back();
-				//创建空列（单元格）
+				//在y处，创建空列，也就是一个格子
 
 				Tile& tile = tile_temp_map[idx_y].back();
 				load_from_tile(tile, str_tile);
@@ -79,6 +103,8 @@ private:
 			return false;
 
 		tile_map = tile_temp_map;
+		//地图初始化完毕，构建洋流图缓存
+		generate_map_cache();
 		return true;
 
 	}
@@ -98,10 +124,20 @@ private:
 					idx_home.x = x;
 					idx_home.y = y;
 				}
+				else
+				{
+					Route temp_route(tile_map, { x,y });
+					spawner_route_pool[tile.special_flag] = temp_route;
+				}
 			}
 		}
 	}
 	//生成地图缓存
+private:
+	Tilemap tile_map;
+	SDL_Point idx_home = { 0 };
+	SpawnerRoutePool spawner_route_pool;
+
 private:
 	//工具函数
 	std::string trim_string(const std::string& str)
@@ -143,7 +179,4 @@ private:
 		tile.special_flag = (values.size() < 4 || values[3] < -1 ? -1 : values[3]);
 		return;
 	}
-private:
-	Tilemap tile_map;
-	SDL_Point idx_home = { 0 };
 };

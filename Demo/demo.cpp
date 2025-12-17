@@ -45,7 +45,7 @@ void test_csv()
 	std::ifstream file("TTTT.csv");
 	if (!file.good())
 	{
-		std::cout << "open file json failed" << std::endl;
+		std::cout << "open file csv failed" << std::endl;
 		return;
 	}
 	std::string str_line;
