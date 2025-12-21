@@ -52,7 +52,7 @@ public:
 	{
 		tile_map[idx.y][idx.x].has_tower = true;
 	}
-private:
+public:
 	//解析csv文件得到瓦片地图
 	bool load_from_set(const std::string& path)
 	{

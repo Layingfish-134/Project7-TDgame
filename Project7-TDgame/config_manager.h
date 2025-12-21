@@ -10,7 +10,7 @@
 #include<iostream>
 #include<vector>
 #include<fstream>
-class ConfigManager : Manager<ConfigManager> 
+class ConfigManager : public Manager<ConfigManager> 
 {
 	friend class Manager<ConfigManager>;
 protected:
