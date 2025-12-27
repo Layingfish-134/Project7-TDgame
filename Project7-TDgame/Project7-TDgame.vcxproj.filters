@@ -22,6 +22,9 @@
     <Filter Include="源文件\cJson">
       <UniqueIdentifier>{60b15f40-10d1-4814-b0db-6fbfa9a2dc94}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Tools">
+      <UniqueIdentifier>{8893a3c0-e37b-44ad-a214-8a36aa99990c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -58,6 +61,15 @@
     </ClInclude>
     <ClInclude Include="resources_manager.h">
       <Filter>头文件\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="animation.h">
+      <Filter>头文件\Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="timer.h">
+      <Filter>头文件\Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector2.h">
+      <Filter>头文件\Tools</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
