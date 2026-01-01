@@ -33,6 +33,9 @@
     <ClCompile Include="..\Third-party\cJSON\cJSON.c">
       <Filter>源文件\cJson</Filter>
     </ClCompile>
+    <ClCompile Include="goblin_priest.h">
+      <Filter>头文件\Enemy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Tile.h">
@@ -70,6 +73,21 @@
     </ClInclude>
     <ClInclude Include="Vector2.h">
       <Filter>头文件\Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="enemy.h">
+      <Filter>头文件\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="slim_enemy.h">
+      <Filter>头文件\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="king_slim_enemy.h">
+      <Filter>头文件\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="skeleton.h">
+      <Filter>头文件\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="goblin.h">
+      <Filter>头文件\Enemy</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

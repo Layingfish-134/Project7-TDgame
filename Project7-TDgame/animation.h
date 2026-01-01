@@ -56,6 +56,7 @@ public:
 			rect.h = height_frame;
 		}
 	}
+	//输入参数为纹理，纹理长宽，需要取得的纹理列表
 
 	void set_loop(bool flag)
 	{

@@ -131,17 +131,23 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Third-party\cJSON\cJSON.c" />
+    <ClCompile Include="goblin_priest.h" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="animation.h" />
     <ClInclude Include="config_manager.h" />
+    <ClInclude Include="enemy.h" />
     <ClInclude Include="enemy_type.h" />
     <ClInclude Include="game_manager.h" />
+    <ClInclude Include="goblin.h" />
+    <ClInclude Include="king_slim_enemy.h" />
     <ClInclude Include="manager.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="resources_manager.h" />
     <ClInclude Include="Route.h" />
+    <ClInclude Include="skeleton.h" />
+    <ClInclude Include="slim_enemy.h" />
     <ClInclude Include="Tile.h" />
     <ClInclude Include="timer.h" />
     <ClInclude Include="Vector2.h" />
