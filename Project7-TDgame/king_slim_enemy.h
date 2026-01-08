@@ -15,10 +15,10 @@ public:
 			find(ResID::Tex_KingSlimeSketch)->second;
 
 		//加载动画
-		std::vector<int> idx_list_up = { 0,1,2,3,4,5 };
-		std::vector<int> idx_list_down = { 6,7,8,9,10,11 };
-		std::vector<int> idx_list_right = { 12,13,14,15,16,17 };
-		std::vector<int> idx_list_left = { 18,19,20,21,22,23 };
+		std::vector<int> idx_list_up = { 6, 7, 8, 9, 10, 11 };
+		std::vector<int> idx_list_down = { 0, 1, 2, 3, 4, 5 };
+		std::vector<int> idx_list_right = { 12, 13, 14, 15, 16, 17 };
+		std::vector<int> idx_list_left = { 18, 19, 20, 21, 22, 23 };
 
 		animation_up.set_interval(0.1f);
 		animation_up.set_loop(true);

@@ -2,6 +2,8 @@
 #include"manager.h"
 #include"config_manager.h"
 #include"resources_manager.h"
+#include"enemy_manager.h"
+#include"wave_manager.h"
 
 #include<SDL.h>
 #include<SDL_image.h>
@@ -15,19 +17,21 @@ class GameManager : public Manager<GameManager>
 public:
 	int run(int argc, char* argv[])
 	{
-		Uint64 last_count = SDL_GetPerformanceCounter();
-		Uint64 count_fre = SDL_GetPerformanceFrequency();
+		//Mix_FadeInMusic(ResourcesManager::instance()->get_music_pool().find(ResID::Music_BGM)->second, -1, 1500);
+
+		Uint64 last_counter = SDL_GetPerformanceCounter();
+		const Uint64 counter_freq = SDL_GetPerformanceFrequency();
 
 		while (!is_quit)
 		{
 			while (SDL_PollEvent(&event))
 				on_input();
 
-			Uint64 cur_count = SDL_GetPerformanceCounter();
-			double delta = (double)((cur_count - last_count) / count_fre);
-			last_count = cur_count;
+			Uint64 current_counter = SDL_GetPerformanceCounter();
+			double delta = (double)(current_counter - last_counter) / counter_freq;
+			last_counter = current_counter;
 			if (delta * 1000 < 1000.0 / 60)
-				SDL_Delay(1000.0 / 60 - delta*1000);
+				SDL_Delay((Uint32)(1000.0 / 60 - delta * 1000));
 
 			on_update(delta);
 
@@ -35,6 +39,7 @@ public:
 			SDL_RenderClear(renderer);
 
 			on_render();
+
 			SDL_RenderPresent(renderer);
 		}
 
@@ -54,7 +59,7 @@ protected:
 
 		ConfigManager* config = ConfigManager::instance();
 		init_assert(config->load_game_config("config.json"), u8"游戏配置加载失败");
-		init_assert(config->map.load_from_set("map.csv"), u8"游戏地图加载失败");
+		init_assert(config->map.load("map.csv"), u8"游戏地图加载失败");
 		init_assert(config->load_level_config("level.json"), u8"游戏关卡加载失败");
 
 		window = SDL_CreateWindow(config->basic_template.window_title.c_str(), SDL_WINDOWPOS_CENTERED,
@@ -110,7 +115,14 @@ private:
 
 	void on_update(double delta)
 	{
+		static ConfigManager* config_instance = ConfigManager::instance();
 
+		if (!config_instance->is_game_over)
+		{
+			//std::cout << "时间更新" << std::endl;
+			WaveManager::instance()->on_update(delta);
+			EnemyManager::instance()->on_update(delta);
+		}
 	}
 
 	void on_render()
@@ -118,13 +130,15 @@ private:
 		ConfigManager* config = ConfigManager::instance();
 		const SDL_Rect& rect_tile_map = config->rect_tile_map;
 		SDL_RenderCopy(renderer, tex_tile_map, nullptr, &rect_tile_map);
+
+		EnemyManager::instance()->on_render(renderer);
 	}
 
 private:
 	bool generate_tile_map_texture() //从瓦片库和地图数据得到实际的瓦片地图纹理
 	{
 		const Map& map = ConfigManager::instance()->map;
-		const Tilemap& tile_map = map.get_tile_map();//瓦片地图数据
+		const TileMap& tile_map = map.get_tile_map();//瓦片地图数据
 		SDL_Texture* tex_tile_set = ResourcesManager::instance()->get_texture_pool().find(ResID::Tex_Tileset)->second;//瓦片库
 		SDL_Rect& rect_tile_map = ConfigManager::instance()->rect_tile_map;//瓦片纹理绘制区域
 
@@ -165,8 +179,8 @@ private:
 				};
 				SDL_Rect rect_tile_src =
 				{
-					(cur_tile.terrain % num_tile_single_line) * SIZE_TILE,
-					(cur_tile.terrain / num_tile_single_line) * SIZE_TILE,
+					(cur_tile.terrian % num_tile_single_line) * SIZE_TILE,
+					(cur_tile.terrian / num_tile_single_line) * SIZE_TILE,
 					SIZE_TILE,
 					SIZE_TILE
 				};

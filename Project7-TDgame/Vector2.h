@@ -82,7 +82,7 @@ public:
 
 	double length() const
 	{
-		return std::sqrt(x * x + y * y);
+		return sqrt(x * x + y * y);
 	}
 };
 

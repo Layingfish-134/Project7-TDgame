@@ -5,6 +5,7 @@
 
 #include<vector>
 #include<functional>
+#include<iostream>
 
 class Animation
 {
@@ -39,7 +40,7 @@ public:
 	void set_frame_data(SDL_Texture* texture,int num_x,int num_y,std::vector<int>& idx_list)
 	{
 		int width_tex = 0, height_tex = 0;
-		SDL_QueryTexture(texture, nullptr, nullptr, &width_tex, &height_frame);
+		SDL_QueryTexture(texture, nullptr, nullptr, &width_tex, &height_tex);
 		width_frame = width_tex / num_x;
 		height_frame = height_tex / num_y;
 		this->texture = texture;
@@ -82,14 +83,15 @@ public:
 	{
 		static SDL_Rect rect_dst;
 
+
 		rect_dst.x = pos_dst.x;
 		rect_dst.y = pos_dst.y;
 		rect_dst.h = height_frame;
 		rect_dst.w = width_frame;
-
+		//std::cout << pos_dst.x << " " << pos_dst.y << std::endl;
 		SDL_RenderCopyEx(renderer, texture, &rect_src_list[idx_frame], &rect_dst, 
 			angle, nullptr, SDL_RendererFlip::SDL_FLIP_NONE);
-
+		//std::cout << "动画绘制" << std::endl;
 
 	}
 private:

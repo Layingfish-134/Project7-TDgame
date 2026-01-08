@@ -136,11 +136,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="animation.h" />
+    <ClInclude Include="coin_manager.h" />
     <ClInclude Include="config_manager.h" />
+    <ClInclude Include="enemy_manager.h" />
     <ClInclude Include="enemy.h" />
     <ClInclude Include="enemy_type.h" />
     <ClInclude Include="game_manager.h" />
     <ClInclude Include="goblin.h" />
+    <ClInclude Include="home_manager.h" />
     <ClInclude Include="king_slim_enemy.h" />
     <ClInclude Include="manager.h" />
     <ClInclude Include="Map.h" />
@@ -152,6 +155,7 @@
     <ClInclude Include="timer.h" />
     <ClInclude Include="Vector2.h" />
     <ClInclude Include="Wave.h" />
+    <ClInclude Include="wave_manager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

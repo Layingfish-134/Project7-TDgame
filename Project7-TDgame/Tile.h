@@ -14,7 +14,7 @@ struct Tile
 		Left,
 		Right
 	};
-	int terrain = 0;
+	int terrian = 0;
 	int decoration = -1;
 	int special_flag = -1;
 	Direction direction = Direction::None;
@@ -23,4 +23,4 @@ struct Tile
 	//游戏逻辑设置
 };
 
-typedef std::vector<std::vector<Tile>> Tilemap;
+typedef std::vector<std::vector<Tile>> TileMap;

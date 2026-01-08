@@ -89,5 +89,17 @@
     <ClInclude Include="goblin.h">
       <Filter>头文件\Enemy</Filter>
     </ClInclude>
+    <ClInclude Include="enemy_manager.h">
+      <Filter>头文件\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="home_manager.h">
+      <Filter>头文件\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="wave_manager.h">
+      <Filter>头文件\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="coin_manager.h">
+      <Filter>头文件\Manager</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
