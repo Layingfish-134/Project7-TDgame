@@ -30,6 +30,11 @@ public:
 	}
 
 public:
+	EnemyList& get_enemy_list()
+	{
+		return enemy_list;
+	}
+public:
 	void on_update(double delta)
 	{
 		for (Enemy* enemy : enemy_list)

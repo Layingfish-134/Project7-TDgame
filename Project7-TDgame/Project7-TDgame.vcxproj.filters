@@ -25,6 +25,15 @@
     <Filter Include="头文件\Tools">
       <UniqueIdentifier>{8893a3c0-e37b-44ad-a214-8a36aa99990c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\Bullet">
+      <UniqueIdentifier>{0d39bc07-71ad-460f-bc28-2300b85dc1e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Config">
+      <UniqueIdentifier>{4826d9c4-fed5-43d3-9a48-d6b894afd289}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Tower">
+      <UniqueIdentifier>{a89ac82b-49f5-4386-af26-8c5e5e2e2faf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -38,26 +47,14 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Tile.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="game_manager.h">
       <Filter>头文件\Manager</Filter>
     </ClInclude>
     <ClInclude Include="manager.h">
       <Filter>头文件\Manager</Filter>
     </ClInclude>
-    <ClInclude Include="Map.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Route.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="config_manager.h">
       <Filter>头文件\Manager</Filter>
-    </ClInclude>
-    <ClInclude Include="Wave.h">
-      <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="enemy_type.h">
       <Filter>头文件\Enemy</Filter>
@@ -99,6 +96,57 @@
       <Filter>头文件\Manager</Filter>
     </ClInclude>
     <ClInclude Include="coin_manager.h">
+      <Filter>头文件\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="bullet.h">
+      <Filter>头文件\Bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="arrow_bullet.h">
+      <Filter>头文件\Bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="axe_bullet.h">
+      <Filter>头文件\Bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="shell_bullet.h">
+      <Filter>头文件\Bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="bullet_manager.h">
+      <Filter>头文件\Manager</Filter>
+    </ClInclude>
+    <ClInclude Include="bullet_type.h">
+      <Filter>头文件\Bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="Map.h">
+      <Filter>头文件\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Route.h">
+      <Filter>头文件\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Tile.h">
+      <Filter>头文件\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Wave.h">
+      <Filter>头文件\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="tower.h">
+      <Filter>头文件\Tower</Filter>
+    </ClInclude>
+    <ClInclude Include="tower_type.h">
+      <Filter>头文件\Tower</Filter>
+    </ClInclude>
+    <ClInclude Include="facing.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="archer_tower.h">
+      <Filter>头文件\Tower</Filter>
+    </ClInclude>
+    <ClInclude Include="axeman_tower.h">
+      <Filter>头文件\Tower</Filter>
+    </ClInclude>
+    <ClInclude Include="gunner_tower.h">
+      <Filter>头文件\Tower</Filter>
+    </ClInclude>
+    <ClInclude Include="tower_manager.h">
       <Filter>头文件\Manager</Filter>
     </ClInclude>
   </ItemGroup>

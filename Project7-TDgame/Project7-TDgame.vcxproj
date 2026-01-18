@@ -135,24 +135,37 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="archer_tower.h" />
+    <ClInclude Include="axeman_tower.h" />
+    <ClInclude Include="axe_bullet.h" />
     <ClInclude Include="animation.h" />
+    <ClInclude Include="arrow_bullet.h" />
+    <ClInclude Include="bullet.h" />
+    <ClInclude Include="bullet_manager.h" />
+    <ClInclude Include="bullet_type.h" />
     <ClInclude Include="coin_manager.h" />
     <ClInclude Include="config_manager.h" />
     <ClInclude Include="enemy_manager.h" />
     <ClInclude Include="enemy.h" />
     <ClInclude Include="enemy_type.h" />
+    <ClInclude Include="facing.h" />
     <ClInclude Include="game_manager.h" />
     <ClInclude Include="goblin.h" />
+    <ClInclude Include="gunner_tower.h" />
     <ClInclude Include="home_manager.h" />
     <ClInclude Include="king_slim_enemy.h" />
     <ClInclude Include="manager.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="resources_manager.h" />
     <ClInclude Include="Route.h" />
+    <ClInclude Include="shell_bullet.h" />
     <ClInclude Include="skeleton.h" />
     <ClInclude Include="slim_enemy.h" />
     <ClInclude Include="Tile.h" />
     <ClInclude Include="timer.h" />
+    <ClInclude Include="tower.h" />
+    <ClInclude Include="tower_manager.h" />
+    <ClInclude Include="tower_type.h" />
     <ClInclude Include="Vector2.h" />
     <ClInclude Include="Wave.h" />
     <ClInclude Include="wave_manager.h" />
