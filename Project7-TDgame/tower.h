@@ -83,7 +83,7 @@ public:
 		if (target_enemy == nullptr)
 			return;
 
-		can_fire_now = true;
+		can_fire_now = false;
 
 		static ConfigManager* config_ins = ConfigManager::instance();
 		const static ResourcesManager::SoundPool& sound_pool = ResourcesManager::instance()->get_sound_pool();

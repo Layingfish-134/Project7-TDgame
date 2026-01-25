@@ -143,6 +143,7 @@
     <ClInclude Include="bullet.h" />
     <ClInclude Include="bullet_manager.h" />
     <ClInclude Include="bullet_type.h" />
+    <ClInclude Include="Coin._prop.h" />
     <ClInclude Include="coin_manager.h" />
     <ClInclude Include="config_manager.h" />
     <ClInclude Include="enemy_manager.h" />

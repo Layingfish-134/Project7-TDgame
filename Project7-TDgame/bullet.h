@@ -95,7 +95,7 @@ public:
 	virtual void on_render(SDL_Renderer* renderer)
 	{
 		static SDL_Point point_anim;
-
+		//std::cout << "子弹基类渲染" << std::endl;
 		point_anim.x = (int)(position.x - size.x / 2);
 		point_anim.y = (int)(position.y - size.y / 2);
 

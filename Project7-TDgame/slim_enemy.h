@@ -61,6 +61,7 @@ public:
 		recover_interval = slim_template.recover_interval;
 		recover_range = slim_template.recover_range;
 		reward_ratio = slim_template.reward_ratio;
+		//reward_ratio = 1;
 
 		hp = max_hp; speed = max_speed;
 		size_anim.x = 48;

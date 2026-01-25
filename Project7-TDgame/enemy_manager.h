@@ -4,6 +4,9 @@
 #include"enemy.h"
 #include"config_manager.h"
 #include"home_manager.h"
+#include"coin_manager.h"
+#include"bullet_manager.h"
+
 
 #include"slim_enemy.h"
 #include"king_slim_enemy.h"
@@ -154,7 +157,63 @@ private:
 
 	void process_collision_bulllet()
 	{
+		static BulletManager::BulletList& bullet_list = BulletManager::instance()->get_bullet_list();
+		for (Enemy* enemy : enemy_list)
+		{
+			if (enemy->can_remove())
+				continue;
 
+			const Vector2& size_enemy = enemy->get_size();
+			const Vector2& pos_enemy = enemy->get_position();
+			for (Bullet* bullet : bullet_list)
+			{
+				if (!bullet->can_collided())
+					continue;
+
+				const Vector2& pos_bullet = bullet->get_position();
+				if (pos_bullet.x >= pos_enemy.x - size_enemy.x / 2
+					&& pos_bullet.y >= pos_enemy.y - size_enemy.y / 2
+					&& pos_bullet.x <= pos_enemy.x + size_enemy.x / 2
+					&& pos_bullet.y <= pos_enemy.y + size_enemy.y / 2)
+				{
+					double bullet_damage = bullet->get_damage();
+					double bullet_range_damage = bullet->get_damage_range();
+					if (bullet_range_damage < 0)
+					{
+						enemy->decrease_hp(bullet_damage);
+						if (enemy->can_remove())
+						{
+							try_spawn_coin_prop(pos_enemy,enemy->get_reward_ratio());
+						}
+					}
+					else
+					{
+						for (Enemy* target_enemy : enemy_list)
+						{
+							const Vector2& pos_target_enemy = target_enemy->get_position();
+							if ((pos_target_enemy - pos_enemy).length() <= bullet_range_damage)
+							{
+								target_enemy->decrease_hp(bullet_damage);
+								if (target_enemy->can_remove())
+									try_spawn_coin_prop(pos_target_enemy,target_enemy->get_reward_ratio());
+							}
+						}
+					}
+
+					bullet->on_collide(enemy);
+				}
+			}
+		}
+	}
+
+	void try_spawn_coin_prop(const Vector2 spawn_pos,double spawn_ratio)
+	{
+		static CoinManager* coin_manager = CoinManager::instance();
+
+		if ( (double)(rand() % 100) / 100 <= spawn_ratio)
+		{
+			coin_manager->spawn_coin_prop(spawn_pos);
+		}
 	}
 
 	void remove_invaild_enemy()

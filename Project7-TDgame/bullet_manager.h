@@ -35,6 +35,7 @@ public:
 
 	void on_render(SDL_Renderer* renderer)
 	{
+		//std::cout << "进行子弹渲染" << std::endl;
 		for (Bullet* bullet : bullet_list)
 			bullet->on_render(renderer);
 	}
@@ -47,6 +48,7 @@ public:
 		{
 		case Arrow:
 			bullet = new ArrowBullet();
+			//std::cout << "生成见识" << std::endl;
 			break;
 		case Axe:
 			bullet = new AxeBullet();
@@ -62,6 +64,8 @@ public:
 		bullet->set_position(position);
 		bullet->set_damage(damage);
 		bullet->set_velocity(velocity);
+
+		bullet_list.push_back(bullet);
 	}
 
 public:
