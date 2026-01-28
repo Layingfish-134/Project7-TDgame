@@ -6,7 +6,12 @@
 #include"wave_manager.h"
 #include"tower_manager.h"
 #include"bullet_manager.h"
-
+#include"player_manager.h"
+#include"Statusbar.h"
+#include"panel.h"
+#include"place_panel.h"
+#include"upgrade_panel.h"
+#include"bannner.h"
 
 #include<SDL.h>
 #include<SDL_image.h>
@@ -22,9 +27,9 @@ public:
 	{
 
 
-		TowerManager::instance()->place_tower(TowerType::Archer, { 5,0 });
+		//TowerManager::instance()->place_tower(TowerType::Archer, { 5,0 });
 
-		//Mix_FadeInMusic(ResourcesManager::instance()->get_music_pool().find(ResID::Music_BGM)->second, -1, 1500);
+		Mix_FadeInMusic(ResourcesManager::instance()->get_music_pool().find(ResID::Music_BGM)->second, -1, 1500);
 
 		Uint64 last_counter = SDL_GetPerformanceCounter();
 		const Uint64 counter_freq = SDL_GetPerformanceFrequency();
@@ -83,6 +88,13 @@ protected:
 
 		init_assert(generate_tile_map_texture(), u8"生成瓦片地图纹理失败");
 
+		status_bar.set_position(15, 15);
+
+
+		place_panel = new PlacePanel();
+		upgrade_panel = new UpgradePanel();
+		banner = new Banner();
+
 	}
 	//在创建游戏管理器的时候即完成游戏的初始启动
 	~GameManager()
@@ -102,9 +114,13 @@ private:
 
 	SDL_Renderer* renderer = nullptr;
 	SDL_Window* window = nullptr;
+	StatusBar status_bar;
+	PlacePanel* place_panel = nullptr;
+	UpgradePanel* upgrade_panel = nullptr;
 
-	SDL_Texture* tex_tile_map;
+	SDL_Texture* tex_tile_map = nullptr;
 
+	Banner* banner = nullptr;
 private:
 	void init_assert(bool flag, const char* error_msg)
 	{
@@ -117,21 +133,87 @@ private:
 private:
 	void on_input()
 	{
+		static SDL_Point position_center;
+		static SDL_Point idx_tile_selected;
+		static ConfigManager* config_manager = ConfigManager::instance();
 
+
+		switch (event.type)
+		{
+		case SDL_QUIT:
+			is_quit = true;
+			break;
+		case SDL_MOUSEBUTTONDOWN:
+			if (config_manager->is_game_over)
+				break;
+			if (get_cursor_idx_tile(idx_tile_selected, event.motion.x, event.motion.y))
+			{
+				get_selected_tile_center_position(position_center, idx_tile_selected);
+
+				//std::cout << position_center.x << " " << position_center.y;
+				if (check_click_home(idx_tile_selected))
+				{
+					upgrade_panel->set_idx_tile(idx_tile_selected);
+					upgrade_panel->set_center_pos(position_center);
+					upgrade_panel->show();
+				}
+				else if (can_place_tower(idx_tile_selected))
+				{
+					place_panel->set_idx_tile(idx_tile_selected);
+					place_panel->set_center_pos(position_center);
+					place_panel->show();
+				}
+			}
+			break;
+		default:
+			break;
+		}
+
+		if (!config_manager->is_game_over)
+		{
+			place_panel->on_input(event);
+			upgrade_panel->on_input(event);
+			PlayerManager::instance()->on_input(event);
+		}
 	}
 
 	void on_update(double delta)
 	{
+		static bool is_game_over_last_tick = false;
 		static ConfigManager* config_instance = ConfigManager::instance();
 
 		if (!config_instance->is_game_over)
 		{
 			//std::cout << "时间更新" << std::endl;
+			
 			WaveManager::instance()->on_update(delta);
 			EnemyManager::instance()->on_update(delta);
 			BulletManager::instance()->on_update(delta);
 			TowerManager::instance()->on_update(delta);
 			CoinManager::instance()->on_update(delta);
+			PlayerManager::instance()->on_update(delta);
+
+			place_panel->on_update(renderer);
+			upgrade_panel->on_update(renderer);
+			status_bar.on_update(renderer);
+
+			return;
+		}
+
+		if (!is_game_over_last_tick && config_instance->is_game_over)//上一帧游戏没有结束但这一帧结束了，则当前为最后一帧
+		{
+			const ResourcesManager::SoundPool& sound_pool = ResourcesManager::instance()->get_sound_pool();
+			Mix_FadeOutMusic(1500);
+			Mix_PlayChannel(-1, config_instance->is_game_win ?
+				sound_pool.find(ResID::Sound_Win)->second : sound_pool.find(ResID::Sound_Loss)->second, 0);
+
+		}
+		is_game_over_last_tick = config_instance->is_game_over;
+
+		banner->on_update(delta);
+		if (banner->check_end_display())
+		{
+			is_quit = true;
 		}
 	}
 
@@ -141,11 +223,27 @@ private:
 		const SDL_Rect& rect_tile_map = config->rect_tile_map;
 		SDL_RenderCopy(renderer, tex_tile_map, nullptr, &rect_tile_map);
 
+	
 		EnemyManager::instance()->on_render(renderer);
 		TowerManager::instance()->on_render(renderer);
 		//std::cout << "should render bullet" << std::endl;
 		BulletManager::instance()->on_render(renderer);
 		CoinManager::instance()->on_render(renderer);
+		PlayerManager::instance()->on_render(renderer);
+		if (!config->is_game_over)
+		{
+			place_panel->on_render(renderer);
+			upgrade_panel->on_render(renderer);
+			status_bar.on_render(renderer);
+
+			return;
+		}
+
+		int width_screen = 0;
+		int height_screen = 0;
+		SDL_GetWindowSizeInPixels(window, &width_screen, &height_screen);
+		banner->set_position({ (double)width_screen / 2,(double)height_screen / 2 });
+		banner->on_render(renderer);
 	}
 
 private:
@@ -228,5 +326,49 @@ private:
 
 		SDL_SetRenderTarget(renderer, nullptr);
 		return true;
+	}
+
+private:
+	bool check_click_home(SDL_Point& idx_tile_cursor_selected)
+	{
+		static const Map& map = ConfigManager::instance()->map;
+		const SDL_Point& idx_home = map.get_home_idx();
+
+		return idx_home.x == idx_tile_cursor_selected.x && idx_home.y == idx_tile_cursor_selected.y;
+	}
+
+	bool get_cursor_idx_tile(SDL_Point& idx_tile_cursor_selected, int screen_x, int screen_y)
+	{
+		static const Map& map = ConfigManager::instance()->map;
+		static const SDL_Rect& rect_tile_map = ConfigManager::instance()->rect_tile_map;
+
+		if (screen_x < rect_tile_map.x || screen_x  > rect_tile_map.x + rect_tile_map.w
+			|| screen_y < rect_tile_map.y || screen_y  > rect_tile_map.y + rect_tile_map.h)
+		{
+			return false;
+		}
+
+		idx_tile_cursor_selected.x = std::min((int)((screen_x - rect_tile_map.x) / SIZE_TILE),(int)map.get_width() - 1);
+		idx_tile_cursor_selected.y = std::min((int)((screen_y - rect_tile_map.y) / SIZE_TILE), (int)map.get_height() - 1);
+
+		return true;
+	}
+
+	bool can_place_tower(const SDL_Point& idx_tile_selected) const
+	{
+		static const Map& map = ConfigManager::instance()->map;
+		const Tile& selected_tile = map.get_tile_map()[idx_tile_selected.y][idx_tile_selected.x];
+
+		return (selected_tile.decoration < 0) && (selected_tile.direction == Tile::Direction::None)
+			&& (!selected_tile.has_tower);
+	}
+
+	void get_selected_tile_center_position(SDL_Point& pos,const SDL_Point& idx_tile_selected)
+	{
+		static const SDL_Rect& rect_tile_map = ConfigManager::instance()->rect_tile_map;
+
+		pos.x = idx_tile_selected.x * SIZE_TILE + SIZE_TILE / 2;
+		pos.y = idx_tile_selected.y * SIZE_TILE + SIZE_TILE / 2;
+
 	}
 };

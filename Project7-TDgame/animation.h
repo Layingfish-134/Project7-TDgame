@@ -37,7 +37,7 @@ public:
 		idx_frame = 0;
 	}
 
-	void set_frame_data(SDL_Texture* texture,int num_x,int num_y,std::vector<int>& idx_list)
+	void set_frame_data(SDL_Texture* texture,int num_x,int num_y,std::vector<int> idx_list)
 	{
 		int width_tex = 0, height_tex = 0;
 		SDL_QueryTexture(texture, nullptr, nullptr, &width_tex, &height_tex);

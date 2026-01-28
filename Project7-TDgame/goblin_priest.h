@@ -63,6 +63,8 @@ public:
 		hp = max_hp; speed = max_speed;
 		size_anim.x = 48;
 		size_anim.y = 48;
+
+		timer_skill.set_wait_time(recover_interval);
 	}
 	~GoblinPriest() = default;
 
