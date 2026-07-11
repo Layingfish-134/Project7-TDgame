@@ -57,6 +57,8 @@ public:
 		max_hp = king_slim_template.hp;
 		max_speed = king_slim_template.speed;
 		damage = king_slim_template.damage;
+		attack_damage = king_slim_template.attack_damage;
+		attack_range = king_slim_template.attack_range;
 		recover_intensity = king_slim_template.recover_intensity;
 		recover_interval = king_slim_template.recover_interval;
 		recover_range = king_slim_template.recover_range;

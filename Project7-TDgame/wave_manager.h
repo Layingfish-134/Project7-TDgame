@@ -13,12 +13,10 @@ class WaveManager : public Manager<WaveManager>
 public:
 	WaveManager()
 	{
-		std::vector<Wave>& wave_list = ConfigManager::instance()->wave_list;
-
 		timer_start_wave.set_one_shot(true);
-		timer_start_wave.set_wait_time(wave_list[0].interval);
 		timer_start_wave.set_on_timeout([&]()
 			{
+				std::vector<Wave>& wave_list = ConfigManager::instance()->wave_list;
 				is_wave_start = true;
 				timer_spawn_enemy.set_wait_time(wave_list[idx_wave].spawn_event_list[0].interval);
 				//std::cout << "波次开始" << std::endl;
@@ -28,6 +26,7 @@ public:
 		timer_spawn_enemy.set_one_shot(true);
 		timer_spawn_enemy.set_on_timeout([&]()
 			{
+				std::vector<Wave>& wave_list = ConfigManager::instance()->wave_list;
 				std::vector<Wave::SpawnEvent>& spawn_event_list = wave_list[idx_wave].spawn_event_list;
 				const Wave::SpawnEvent& spawn_event = spawn_event_list[idx_spawn_event];
 				//std::cout << "生成敌人计时器触发" << std::endl;
@@ -50,6 +49,104 @@ public:
 	}
 	~WaveManager() = default;
 public:
+	void reset()
+	{
+		idx_wave = 0;
+		idx_spawn_event = 0;
+		is_wave_start = false;
+		is_cur_wave_spawned_last_enemy = false;
+
+		std::vector<Wave>& wave_list = ConfigManager::instance()->wave_list;
+		if (!wave_list.empty())
+		{
+			timer_start_wave.set_wait_time(wave_list[0].interval);
+			timer_start_wave.restart();
+			timer_spawn_enemy.restart();
+		}
+	}
+
+	int get_current_wave_index() const
+	{
+		return idx_wave;
+	}
+
+	int get_total_wave_count() const
+	{
+		return (int)ConfigManager::instance()->wave_list.size();
+	}
+
+	bool is_wave_active() const
+	{
+		return is_wave_start;
+	}
+
+	bool is_current_wave_finished_spawning() const
+	{
+		return is_cur_wave_spawned_last_enemy;
+	}
+
+	double get_next_wave_remaining_time() const
+	{
+		return is_wave_start ? 0 : timer_start_wave.get_remaining_time();
+	}
+
+	bool current_wave_contains_boss() const
+	{
+		return wave_contains_boss(idx_wave);
+	}
+
+	bool is_current_boss_pending() const
+	{
+		if (!current_wave_contains_boss())
+			return false;
+
+		const std::vector<Wave>& wave_list = ConfigManager::instance()->wave_list;
+		if (idx_wave < 0 || idx_wave >= (int)wave_list.size())
+			return false;
+
+		const std::vector<Wave::SpawnEvent>& spawn_event_list = wave_list[idx_wave].spawn_event_list;
+		for (int i = 0; i < (int)spawn_event_list.size(); i++)
+		{
+			if (spawn_event_list[i].enemy_type != EnemyType::Boss)
+				continue;
+
+			return !is_wave_start || i >= idx_spawn_event;
+		}
+		return false;
+	}
+
+	void debug_skip_current_wave()
+	{
+		ConfigManager* config = ConfigManager::instance();
+		std::vector<Wave>& wave_list = config->wave_list;
+		if (config->is_game_over || wave_list.empty())
+			return;
+
+		if (idx_wave < 0 || idx_wave >= (int)wave_list.size())
+		{
+			config->is_game_over = true;
+			config->is_game_win = true;
+			return;
+		}
+
+		CoinManager::instance()->increase_coin(wave_list[idx_wave].rewards);
+		idx_wave++;
+		idx_spawn_event = 0;
+		is_wave_start = false;
+		is_cur_wave_spawned_last_enemy = false;
+
+		if (idx_wave >= (int)wave_list.size())
+		{
+			config->is_game_over = true;
+			config->is_game_win = true;
+			return;
+		}
+
+		timer_start_wave.set_wait_time(wave_list[idx_wave].interval);
+		timer_start_wave.restart();
+		timer_spawn_enemy.restart();
+	}
+
 	void on_update(double delta)
 	{
 		static ConfigManager* config_instance = ConfigManager::instance();
@@ -89,6 +186,18 @@ public:
 		}
 	}
 private:
+	bool wave_contains_boss(int wave_index) const
+	{
+		const std::vector<Wave>& wave_list = ConfigManager::instance()->wave_list;
+		if (wave_index < 0 || wave_index >= (int)wave_list.size())
+			return false;
+
+		for (const Wave::SpawnEvent& event : wave_list[wave_index].spawn_event_list)
+			if (event.enemy_type == EnemyType::Boss)
+				return true;
+		return false;
+	}
+
 	//游戏包含多个wave，一个wave包含多个spawn
 	int idx_wave = 0;
 	int idx_spawn_event = 0;

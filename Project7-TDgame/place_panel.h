@@ -1,109 +1,193 @@
 #pragma once
-#include"panel.h"
+#include"resources_manager.h"
 #include"tower_manager.h"
 #include"coin_manager.h"
-
+#include"ui_helpers.h"
 
 #include<SDL2_gfxPrimitives.h>
-class PlacePanel : public Panel
+#include<functional>
+#include<string>
+#include<vector>
+
+class PlacePanel
 {
 public:
-	PlacePanel()
+	typedef std::function<void(TowerType, SDL_Point)> PlaceRequestCallback;
+
+	void set_on_place_requested(PlaceRequestCallback callback)
 	{
-		const ResourcesManager::TexturePool& tex_pool = ResourcesManager::instance()->get_texture_pool();
-
-		tex_idle = tex_pool.find(ResID::Tex_UIPlaceIdle)->second;
-		tex_highlight_top = tex_pool.find(ResID::Tex_UIPlaceHoveredTop)->second;
-		tex_highlight_left = tex_pool.find(ResID::Tex_UIPlaceHoveredLeft)->second;
-		tex_highlight_right = tex_pool.find(ResID::Tex_UIPlaceHoveredRight)->second;
-
-	}
-	~PlacePanel() = default;
-public:
-	void on_update(SDL_Renderer* renderer) override
-	{
-		static TowerManager* tower_manager = TowerManager::instance();
-		val_top = (int)tower_manager->get_place_tower_cost(TowerType::Axeman);
-		val_left = (int)tower_manager->get_place_tower_cost(TowerType::Archer);
-		val_right = (int)tower_manager->get_place_tower_cost(TowerType::Gunner);
-
-		range_top = (int)tower_manager->get_tower_damage_range(TowerType::Axeman) * SIZE_TILE;
-		range_left = (int)tower_manager->get_tower_damage_range(TowerType::Archer) * SIZE_TILE;
-		range_right = (int)tower_manager->get_tower_damage_range(TowerType::Gunner) * SIZE_TILE;
-
-		Panel::on_update(renderer);
+		on_place_requested = callback;
 	}
 
-	void on_render(SDL_Renderer* renderer) override
+	void show()
 	{
-		if (!visiable)
+		visible = true;
+		hovered_index = -1;
+	}
+
+	void hide()
+	{
+		visible = false;
+		hovered_index = -1;
+	}
+
+	void set_idx_tile(const SDL_Point& idx)
+	{
+		point_selected = idx;
+	}
+
+	void set_center_pos(const SDL_Point& pos)
+	{
+		center_pos = pos;
+		update_layout();
+	}
+
+	void on_update(SDL_Renderer*)
+	{
+	}
+
+	void on_render(SDL_Renderer* renderer)
+	{
+		if (!visible)
 			return;
 
-		int region = 0;
-		switch (hovered_tar)
-		{
-		case Panel::HoveredTarget::Top:
-			region = range_top;
-			break;
-		case Panel::HoveredTarget::Left:
-			region = range_left;
-			break;
-		case Panel::HoveredTarget::Right:
-			region = range_right;
-			break;
-		}
-
-		if (region > 0)
-		{
-			filledCircleRGBA(renderer, center_pos.x, center_pos.y, region,
-				color_range_circle_content.r, color_range_circle_content.g, color_range_circle_content.b,
-				color_range_circle_content.a);
-
-			aacircleRGBA(renderer, center_pos.x, center_pos.y, region,
-				color_range_circle_frame.r, color_range_circle_frame.g, color_range_circle_frame.b,
-				color_range_circle_frame.a);
-		}
-		Panel::on_render(renderer);
+		render_range(renderer);
+		UI::draw_texture(renderer, build_panel_texture(), panel_rect);
+		UI::draw_text(renderer, u8"建造", panel_rect.x + 18, panel_rect.y + 14, color_title, ResID::Font_Small);
+		for (size_t i = 0; i < options.size(); i++)
+			render_button(renderer, (int)i);
 	}
-protected:
-	void on_click_top() override
+
+	void on_input(const SDL_Event& event)
 	{
-		static CoinManager* coin_manager = CoinManager::instance();
+		if (!visible)
+			return;
 
-		if (val_top <= coin_manager->get_current_coin_num())
+		if (event.type == SDL_MOUSEMOTION)
 		{
-			TowerManager::instance()->place_tower(TowerType::Axeman, point_selected);
-			coin_manager->decrease_coin(val_top);
+			SDL_Point cursor = { event.motion.x, event.motion.y };
+			hovered_index = -1;
+			for (size_t i = 0; i < button_rects.size(); i++)
+				if (SDL_PointInRect(&cursor, &button_rects[i]))
+					hovered_index = (int)i;
 		}
-
-	}
-	void on_click_left() override
-	{
-		static CoinManager* coin_manager = CoinManager::instance();
-
-		if (val_left <= coin_manager->get_current_coin_num())
+		else if (event.type == SDL_MOUSEBUTTONUP)
 		{
-			TowerManager::instance()->place_tower(TowerType::Archer, point_selected);
-			//std::cout << "cost archer: " << val_left << std::endl;
-			coin_manager->decrease_coin(val_left);
+			if (hovered_index >= 0 && hovered_index < (int)options.size() && on_place_requested)
+				on_place_requested(options[hovered_index].type, point_selected);
+			visible = false;
 		}
-
-	}
-	void on_click_right() override
-	{
-		static CoinManager* coin_manager = CoinManager::instance();
-
-		if (val_right <= coin_manager->get_current_coin_num())
+		else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)
 		{
-			TowerManager::instance()->place_tower(TowerType::Gunner, point_selected);
-			coin_manager->decrease_coin(val_right);
+			visible = false;
 		}
-
 	}
-	
+
 private:
-	int range_top = 0; int range_left = 0; int range_right = 0;
-	const SDL_Color color_range_circle_frame = { 30,80,162,175 };
-	const SDL_Color color_range_circle_content = { 0,149,217,75 };
+	struct BuildOption
+	{
+		TowerType type;
+		const char* name;
+	};
 
+	void update_layout()
+	{
+		panel_rect = { center_pos.x + 38, center_pos.y - 94, 420, 188 };
+		button_rects.clear();
+		for (int i = 0; i < 4; i++)
+		{
+			int col = i % 2;
+			int row = i / 2;
+			button_rects.push_back({ panel_rect.x + 24 + col * 198, panel_rect.y + 48 + row * 58, 174, 52 });
+		}
+	}
+
+	void render_button(SDL_Renderer* renderer, int index)
+	{
+		const BuildOption& option = options[index];
+		SDL_Rect rect = button_rects[index];
+		double cost = TowerManager::instance()->get_place_tower_cost(option.type);
+		bool affordable = cost <= CoinManager::instance()->get_current_coin_num();
+		SDL_Color text_color = affordable ? color_primary : color_disabled;
+
+		if (!affordable)
+		{
+			SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+			SDL_SetRenderDrawColor(renderer, 18, 20, 24, 115);
+			SDL_RenderFillRect(renderer, &rect);
+		}
+
+		render_tower_icon(renderer, option.type, { rect.x + 12, rect.y + 7, 38, 38 });
+		UI::draw_text(renderer, option.name, rect.x + 58, rect.y + 6, text_color, ResID::Font_Small);
+		UI::draw_text(renderer, "$" + std::to_string((int)cost), rect.x + 58, rect.y + 29, text_color, ResID::Font_Small);
+	}
+
+	ResID build_panel_texture() const
+	{
+		switch (hovered_index)
+		{
+		case 0: return ResID::Tex_UIBuildPanelHover0;
+		case 1: return ResID::Tex_UIBuildPanelHover1;
+		case 2: return ResID::Tex_UIBuildPanelHover2;
+		case 3: return ResID::Tex_UIBuildPanelHover3;
+		default: return ResID::Tex_UIBuildPanel;
+		}
+	}
+
+	void render_tower_icon(SDL_Renderer* renderer, TowerType type, const SDL_Rect& dst)
+	{
+		switch (type)
+		{
+		case TowerType::Archer:
+			render_sheet_icon(renderer, ResID::Tex_Archer, 3, 8, 0, dst);
+			break;
+		case TowerType::Axeman:
+			render_sheet_icon(renderer, ResID::Tex_Axeman, 3, 8, 0, dst);
+			break;
+		case TowerType::Gunner:
+			render_sheet_icon(renderer, ResID::Tex_Gunner, 4, 8, 0, dst);
+			break;
+		case TowerType::Barracks:
+			render_sheet_icon(renderer, ResID::Tex_BarracksLv1, 3, 8, 0, dst);
+			break;
+		}
+	}
+
+	void render_sheet_icon(SDL_Renderer* renderer, ResID res_id, int columns, int rows, int frame, const SDL_Rect& dst)
+	{
+		SDL_Texture* texture = ResourcesManager::instance()->get_texture_pool().find(res_id)->second;
+		int tex_width = 0, tex_height = 0;
+		SDL_QueryTexture(texture, nullptr, nullptr, &tex_width, &tex_height);
+		SDL_Rect src = { (frame % columns) * (tex_width / columns), (frame / columns) * (tex_height / rows), tex_width / columns, tex_height / rows };
+		SDL_RenderCopy(renderer, texture, &src, &dst);
+	}
+
+	void render_range(SDL_Renderer* renderer)
+	{
+		if (hovered_index < 0 || hovered_index >= (int)options.size())
+			return;
+		int radius = (int)(TowerManager::instance()->get_tower_damage_range(options[hovered_index].type) * SIZE_TILE);
+		if (radius <= 0)
+			return;
+		filledCircleRGBA(renderer, center_pos.x, center_pos.y, radius, 0, 149, 217, 45);
+		aacircleRGBA(renderer, center_pos.x, center_pos.y, radius, 30, 80, 162, 145);
+	}
+
+	bool visible = false;
+	int hovered_index = -1;
+	SDL_Point point_selected = { 0, 0 };
+	SDL_Point center_pos = { 0, 0 };
+	SDL_Rect panel_rect = { 0, 0, 0, 0 };
+	std::vector<SDL_Rect> button_rects;
+	PlaceRequestCallback on_place_requested;
+	const SDL_Color color_title = { 104, 77, 49, 255 };
+	const SDL_Color color_primary = { 82, 70, 49, 255 };
+	const SDL_Color color_disabled = { 151, 139, 112, 255 };
+	std::vector<BuildOption> options =
+	{
+		{ TowerType::Archer, "Archer" },
+		{ TowerType::Axeman, "Axeman" },
+		{ TowerType::Gunner, "Gunner" },
+		{ TowerType::Barracks, "Barracks" }
+	};
 };

@@ -5,5 +5,8 @@ enum class EnemyType
 	KingSilm,
 	Skeleton,
 	Goblin,
-	GoblinPriest
+	GoblinPriest,
+	Boss,
+	Silencer,
+	Armored
 };

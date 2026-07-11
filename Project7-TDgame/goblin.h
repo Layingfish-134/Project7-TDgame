@@ -56,6 +56,8 @@ public:
 		max_hp = goblin_template.hp;
 		max_speed = goblin_template.speed;
 		damage = goblin_template.damage;
+		attack_damage = goblin_template.attack_damage;
+		attack_range = goblin_template.attack_range;
 		recover_intensity = goblin_template.recover_intensity;
 		recover_interval = goblin_template.recover_interval;
 		recover_range = goblin_template.recover_range;

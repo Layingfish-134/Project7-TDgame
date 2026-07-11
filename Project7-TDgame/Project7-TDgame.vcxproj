@@ -119,6 +119,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\Third-party\SDL2_ttf\include;..\Third-party\cJSON\include;..\Third-party\SDL2_mixer\include;..\Third-party\SDL2_image\include;..\Third-party\SDL2\include;..\Third-party\SDL2_gfx\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -126,8 +127,20 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\Third-party\SDL2_image\lib\x64;..\Third-party\SDL2_mixer\lib\x64;..\Third-party\SDL2_ttf\lib\x64;..\Third-party\SDL2\lib\x64;..\Third-party\SDL2_gfx\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_gfx.lib;SDL2_mixer.lib;SDL2_image.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_gfx.lib;SDL2_mixer.lib;SDL2_image.lib;SDL2_ttf.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>if exist "$(OutDir)resources" rmdir /S /Q "$(OutDir)resources"
+if exist "$(ProjectDir)..\x64\$(Configuration)\resources" rmdir /S /Q "$(ProjectDir)..\x64\$(Configuration)\resources"
+xcopy "$(ProjectDir)config.json" "$(OutDir)" /Y
+xcopy "$(ProjectDir)resources" "$(OutDir)resources\" /E /I /Y
+xcopy "$(ProjectDir)SDL2*.dll" "$(OutDir)" /Y
+xcopy "$(TargetPath)" "$(ProjectDir)..\x64\$(Configuration)\" /Y
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\x64\$(Configuration)\" /Y
+xcopy "$(ProjectDir)config.json" "$(ProjectDir)..\x64\$(Configuration)\" /Y
+xcopy "$(ProjectDir)resources" "$(ProjectDir)..\x64\$(Configuration)\resources\" /E /I /Y
+xcopy "$(ProjectDir)SDL2*.dll" "$(ProjectDir)..\x64\$(Configuration)\" /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Third-party\cJSON\cJSON.c" />
@@ -136,11 +149,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="archer_tower.h" />
+    <ClInclude Include="armored_enemy.h" />
     <ClInclude Include="axeman_tower.h" />
     <ClInclude Include="axe_bullet.h" />
     <ClInclude Include="animation.h" />
     <ClInclude Include="arrow_bullet.h" />
+    <ClInclude Include="barracks_tower.h" />
     <ClInclude Include="bannner.h" />
+    <ClInclude Include="boss_enemy.h" />
     <ClInclude Include="bullet.h" />
     <ClInclude Include="bullet_manager.h" />
     <ClInclude Include="bullet_type.h" />
@@ -155,15 +171,26 @@
     <ClInclude Include="goblin.h" />
     <ClInclude Include="gunner_tower.h" />
     <ClInclude Include="home_manager.h" />
+    <ClInclude Include="game_scene.h" />
     <ClInclude Include="king_slim_enemy.h" />
+    <ClInclude Include="level_select_scene.h" />
+    <ClInclude Include="main_menu_scene.h" />
     <ClInclude Include="manager.h" />
     <ClInclude Include="Map.h" />
-    <ClInclude Include="panel.h" />
+    <ClInclude Include="network_manager.h" />
+    <ClInclude Include="network_scene.h" />
     <ClInclude Include="place_panel.h" />
+    <ClInclude Include="remove_panel.h" />
     <ClInclude Include="player_manager.h" />
     <ClInclude Include="resources_manager.h" />
     <ClInclude Include="Route.h" />
+    <ClInclude Include="save_manager.h" />
+    <ClInclude Include="save_slot_scene.h" />
+    <ClInclude Include="scene.h" />
+    <ClInclude Include="scene_factory.h" />
+    <ClInclude Include="scene_manager.h" />
     <ClInclude Include="shell_bullet.h" />
+    <ClInclude Include="silencer_enemy.h" />
     <ClInclude Include="skeleton.h" />
     <ClInclude Include="slim_enemy.h" />
     <ClInclude Include="Statusbar.h" />
@@ -171,7 +198,9 @@
     <ClInclude Include="timer.h" />
     <ClInclude Include="tower.h" />
     <ClInclude Include="tower_manager.h" />
+    <ClInclude Include="tower_specialization.h" />
     <ClInclude Include="tower_type.h" />
+    <ClInclude Include="ui_helpers.h" />
     <ClInclude Include="upgrade_panel.h" />
     <ClInclude Include="Vector2.h" />
     <ClInclude Include="Wave.h" />

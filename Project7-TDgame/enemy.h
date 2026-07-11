@@ -4,7 +4,10 @@
 #include "Vector2.h"
 #include "animation.h"
 #include "config_manager.h"
+#include "enemy_type.h"
+#include "resources_manager.h"
 
+#include <algorithm>
 #include <functional>
 
 class Enemy
@@ -15,6 +18,11 @@ public:
 public:
 	Enemy()
 	{
+		this->set_on_skill_released([&](Enemy* enemy_src)
+			{
+				return;
+			});
+
 		timer_skill.set_one_shot(false);
 		timer_skill.set_on_timeout([&]() { on_skill_released(this); });
 
@@ -24,15 +32,19 @@ public:
 
 		timer_restore_speed.set_one_shot(true);
 		timer_restore_speed.set_on_timeout([&]() { speed = max_speed; });
+
+		timer_intercept.set_one_shot(true);
+		timer_intercept.set_on_timeout([&]() { intercepted = false; });
 	}
 
-	~Enemy() = default;
+	virtual ~Enemy() = default;
 
-	void on_update(double delta)
+	virtual void on_update(double delta)
 	{
 		timer_skill.on_update(delta);
 		timer_sketch.on_update(delta);
 		timer_restore_speed.on_update(delta);
+		timer_intercept.on_update(delta);
 
 		Vector2 move_distance = velocity * delta;
 		Vector2 target_distance = position_target - position;
@@ -69,7 +81,7 @@ public:
 		anim_current->on_update(delta);
 	}
 
-	void on_render(SDL_Renderer* renderer)
+	virtual void on_render(SDL_Renderer* renderer)
 	{
 		static SDL_Rect rect;
 		static SDL_Point point;
@@ -96,6 +108,8 @@ public:
 			SDL_SetRenderDrawColor(renderer, color_border.r, color_border.g, color_border.b, color_border.a);
 			SDL_RenderDrawRect(renderer, &rect);
 		}
+
+		render_status_icons(renderer);
 	}
 
 	void set_on_skill_released(SkillCallback on_skill_released)
@@ -111,9 +125,13 @@ public:
 			hp = max_hp;
 	}
 
-	void decrease_hp(double val)
+	void decrease_hp(double val, bool armor_break = false)
 	{
-		hp -= val;
+		double final_damage = val;
+		if (armor > 0 && !armor_break)
+			final_damage *= (1.0 - armor);
+
+		hp -= final_damage;
 
 		if (hp <= 0)
 		{
@@ -125,11 +143,24 @@ public:
 		timer_sketch.restart();
 	}
 
-	void slow_down()
+	void slow_down(double factor = 0.5, double duration = 1)
 	{
-		speed = max_speed - 0.5;
-		timer_restore_speed.set_wait_time(1);
+		speed = (std::max)(0.05, max_speed * factor);
+		timer_restore_speed.set_wait_time(duration);
 		timer_restore_speed.restart();
+	}
+
+	void apply_intercept(double duration)
+	{
+		intercepted = true;
+		slow_down(0.12, duration);
+		timer_intercept.set_wait_time(duration);
+		timer_intercept.restart();
+	}
+
+	void set_armor(double val)
+	{
+		armor = (std::max)(0.0, (std::min)(val, 0.9));
 	}
 
 	void set_position(const Vector2& position)
@@ -149,9 +180,39 @@ public:
 		is_valid = false;
 	}
 
+	void set_enemy_type(EnemyType type)
+	{
+		enemy_type = type;
+	}
+
 	double get_hp() const
 	{
 		return hp;
+	}
+
+	double get_max_hp() const
+	{
+		return max_hp;
+	}
+
+	bool is_showing_sketch() const
+	{
+		return is_show_sketch;
+	}
+
+	bool is_armored() const
+	{
+		return armor > 0;
+	}
+
+	bool is_intercepted() const
+	{
+		return intercepted;
+	}
+
+	EnemyType get_enemy_type() const
+	{
+		return enemy_type;
 	}
 
 	const Vector2& get_size() const
@@ -172,6 +233,16 @@ public:
 	double get_damage() const
 	{
 		return damage;
+	}
+
+	double get_attack_damage() const
+	{
+		return attack_damage;
+	}
+
+	double get_attack_range() const
+	{
+		return SIZE_TILE * attack_range;
 	}
 
 	double get_reward_ratio() const
@@ -221,10 +292,13 @@ protected:
 	double speed = 0;
 	double max_speed = 0;
 	double damage = 0;
+	double attack_damage = 0;
+	double attack_range = 0;
 	double reward_ratio = 0;
 	double recover_interval = 0;
 	double recover_range = 0;
 	double recover_intensity = 0;
+	EnemyType enemy_type = EnemyType::Silm;
 
 private:
 	Vector2 position;
@@ -241,6 +315,9 @@ private:
 	SkillCallback on_skill_released;
 
 	Timer timer_restore_speed;
+	Timer timer_intercept;
+	bool intercepted = false;
+	double armor = 0;
 
 	const Route* route = nullptr;
 	int idx_target = 0;
@@ -259,6 +336,24 @@ private:
 			position_target.x = rect_tile_map.x + point.x * SIZE_TILE + SIZE_TILE / 2;
 			position_target.y = rect_tile_map.y + point.y * SIZE_TILE + SIZE_TILE / 2;
 		}
+	}
+
+	void render_status_icons(SDL_Renderer* renderer)
+	{
+		const ResourcesManager::TexturePool& tex_pool = ResourcesManager::instance()->get_texture_pool();
+		int icon_x = (int)(position.x - 20);
+		int icon_y = (int)(position.y - size_anim.y / 2 - 12);
+
+		if (armor > 0)
+			render_status_icon(renderer, tex_pool.find(ResID::Tex_UIStatusArmor)->second, icon_x, icon_y);
+		if (intercepted)
+			render_status_icon(renderer, tex_pool.find(ResID::Tex_UIStatusIntercept)->second, icon_x + 18, icon_y);
+	}
+
+	void render_status_icon(SDL_Renderer* renderer, SDL_Texture* texture, int x, int y)
+	{
+		SDL_Rect dst = { x, y, 16, 16 };
+		SDL_RenderCopy(renderer, texture, nullptr, &dst);
 	}
 
 };

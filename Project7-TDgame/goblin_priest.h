@@ -55,6 +55,8 @@ public:
 		max_hp = goblin_priest_template.hp;
 		max_speed = goblin_priest_template.speed;
 		damage = goblin_priest_template.damage;
+		attack_damage = goblin_priest_template.attack_damage;
+		attack_range = goblin_priest_template.attack_range;
 		recover_intensity = goblin_priest_template.recover_intensity;
 		recover_interval = goblin_priest_template.recover_interval;
 		recover_range = goblin_priest_template.recover_range;

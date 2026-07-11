@@ -10,6 +10,8 @@
 #include<iostream>
 #include<vector>
 #include<fstream>
+#include<sstream>
+#include<algorithm>
 class ConfigManager : public Manager<ConfigManager> 
 {
 	friend class Manager<ConfigManager>;
@@ -38,6 +40,7 @@ public:
 		double interval[10] = { 1 };
 		double damage[10] = { 2 };
 		double view_range[10] = { 5 };
+		double soldier_attack_range[10] = { 0.75 };
 		double cost[10] = { 10 };
 		double upgrade_cost[9] = { 75 };
 	};
@@ -47,19 +50,33 @@ public:
 		double hp = 10;
 		double speed = 1;
 		double damage = 1;
+		double attack_damage = 1;
+		double attack_range = 0.75;
 		double reward_ratio = 0.8;
 		double recover_interval = 100;
 		double recover_range = -1;
 		double recover_intensity = 10;
 	};
+
+	struct LevelInfo
+	{
+		int id = 1;
+		std::string name;
+		std::string description;
+		std::string objective;
+		std::string difficulty;
+		std::string map_path;
+		std::string wave_path;
+		int target_time = 120;
+		int star_home_hp = 7;
+		int star_coin = 120;
+	};
 public:
 	Map map;
 
 	std::vector<Wave> wave_list;
-
-	int level_axeman = 0;
-	int level_archer = 0;
-	int level_gunner = 0;
+	std::vector<LevelInfo> level_list;
+	int current_level_id = 1;
 
 	bool is_game_win = false;
 	bool is_game_over = false;
@@ -72,22 +89,113 @@ public:
 	TowerTemplate axeman_template;
 	TowerTemplate archer_template;
 	TowerTemplate gunner_template;
+	TowerTemplate barracks_template;
 
 	EnemyTemplate slim_template;
 	EnemyTemplate king_slim_template;
 	EnemyTemplate skeleton_template;
 	EnemyTemplate goblin_template;
 	EnemyTemplate goblin_priest_template;
+	EnemyTemplate silencer_template;
+	EnemyTemplate armored_template;
 
 	const double num_init_hp = 10;
 	const double num_init_coin = 100;
 	const double num_coin_per_prop = 10;
 public:
+	void reset_runtime_state()
+	{
+		is_game_win = false;
+		is_game_over = false;
+		rect_tile_map = { 0 };
+		map.clear_tower_flags();
+	}
+
+	bool load_level_manifest(const std::string& path)
+	{
+		std::ifstream file(path);
+		if (!file.good())
+			return false;
+
+		std::stringstream str_stream;
+		str_stream << file.rdbuf();
+		file.close();
+
+		cJSON* json_root = cJSON_Parse(str_stream.str().c_str());
+		if (!json_root || json_root->type != cJSON_Array)
+			return false;
+
+		level_list.clear();
+		cJSON* json_level = nullptr;
+		cJSON_ArrayForEach(json_level, json_root)
+		{
+			if (!json_level || json_level->type != cJSON_Object)
+				continue;
+
+			LevelInfo info;
+			cJSON* json_id = cJSON_GetObjectItem(json_level, "id");
+			cJSON* json_name = cJSON_GetObjectItem(json_level, "name");
+			cJSON* json_description = cJSON_GetObjectItem(json_level, "description");
+			cJSON* json_objective = cJSON_GetObjectItem(json_level, "objective");
+			cJSON* json_difficulty = cJSON_GetObjectItem(json_level, "difficulty");
+			cJSON* json_map = cJSON_GetObjectItem(json_level, "map");
+			cJSON* json_wave = cJSON_GetObjectItem(json_level, "wave");
+			cJSON* json_target_time = cJSON_GetObjectItem(json_level, "target_time");
+			cJSON* json_star_home_hp = cJSON_GetObjectItem(json_level, "star_home_hp");
+			cJSON* json_star_coin = cJSON_GetObjectItem(json_level, "star_coin");
+
+			if (json_id && json_id->type == cJSON_Number)
+				info.id = json_id->valueint;
+			if (json_name && json_name->type == cJSON_String)
+				info.name = json_name->valuestring;
+			if (json_description && json_description->type == cJSON_String)
+				info.description = json_description->valuestring;
+			if (json_objective && json_objective->type == cJSON_String)
+				info.objective = json_objective->valuestring;
+			if (json_difficulty && json_difficulty->type == cJSON_String)
+				info.difficulty = json_difficulty->valuestring;
+			if (json_map && json_map->type == cJSON_String)
+				info.map_path = json_map->valuestring;
+			if (json_wave && json_wave->type == cJSON_String)
+				info.wave_path = json_wave->valuestring;
+			if (json_target_time && json_target_time->type == cJSON_Number)
+				info.target_time = json_target_time->valueint;
+			if (json_star_home_hp && json_star_home_hp->type == cJSON_Number)
+				info.star_home_hp = json_star_home_hp->valueint;
+			if (json_star_coin && json_star_coin->type == cJSON_Number)
+				info.star_coin = json_star_coin->valueint;
+
+			if (!info.map_path.empty() && !info.wave_path.empty())
+				level_list.push_back(info);
+		}
+
+		cJSON_Delete(json_root);
+		return !level_list.empty();
+	}
+
+	const LevelInfo* get_level_info(int level_id) const
+	{
+		for (const LevelInfo& level : level_list)
+			if (level.id == level_id)
+				return &level;
+		return nullptr;
+	}
+
+	int get_max_level_id() const
+	{
+		int max_id = 1;
+		for (const LevelInfo& level : level_list)
+			max_id = std::max(max_id, level.id);
+		return max_id;
+	}
+
 	bool load_level_config(const std::string& path)
 	{
 		std::ifstream file(path);
 		if (!file.good())
 			return false;
+
+		wave_list.clear();
 
 		std::stringstream str_stream;
 		str_stream << file.rdbuf();
@@ -143,9 +251,9 @@ public:
 					if (json_wave_spawn_event_enemy && json_wave_spawn_event_enemy->type == cJSON_String)
 					{
 						std::string spawn_event_enemy = json_wave_spawn_event_enemy->valuestring;
-						if (spawn_event_enemy == "Silm")
+						if (spawn_event_enemy == "Slim" || spawn_event_enemy == "Silm")
 							cur_spawn_event.enemy_type = EnemyType::Silm;
-						else if (spawn_event_enemy == "KingSilm")
+						else if (spawn_event_enemy == "KingSlim" || spawn_event_enemy == "KingSilm")
 							cur_spawn_event.enemy_type = EnemyType::KingSilm;
 						else if (spawn_event_enemy == "Skeleton")
 							cur_spawn_event.enemy_type = EnemyType::Skeleton;
@@ -153,6 +261,12 @@ public:
 							cur_spawn_event.enemy_type = EnemyType::Goblin;
 						else if (spawn_event_enemy == "GoblinPriest")
 							cur_spawn_event.enemy_type = EnemyType::GoblinPriest;
+						else if (spawn_event_enemy == "Boss")
+							cur_spawn_event.enemy_type = EnemyType::Boss;
+						else if (spawn_event_enemy == "Silencer")
+							cur_spawn_event.enemy_type = EnemyType::Silencer;
+						else if (spawn_event_enemy == "Armored")
+							cur_spawn_event.enemy_type = EnemyType::Armored;
 					}
 				}
 				if (cur_wave.spawn_event_list.empty())
@@ -207,6 +321,7 @@ public:
 		parse_tower_template(archer_template, cJSON_GetObjectItem(json_tower, "archer"));
 		parse_tower_template(axeman_template, cJSON_GetObjectItem(json_tower, "axeman"));
 		parse_tower_template(gunner_template, cJSON_GetObjectItem(json_tower, "gunner"));
+		parse_tower_template(barracks_template, cJSON_GetObjectItem(json_tower, "barracks"));
 
 
 		parse_enemy_template(slim_template, cJSON_GetObjectItem(json_enemy, "slim"));
@@ -214,6 +329,8 @@ public:
 		parse_enemy_template(skeleton_template, cJSON_GetObjectItem(json_enemy, "skeleton"));
 		parse_enemy_template(goblin_template, cJSON_GetObjectItem(json_enemy, "goblin"));
 		parse_enemy_template(goblin_priest_template, cJSON_GetObjectItem(json_enemy, "goblin_priest"));
+		parse_enemy_template(silencer_template, cJSON_GetObjectItem(json_enemy, "silencer"));
+		parse_enemy_template(armored_template, cJSON_GetObjectItem(json_enemy, "armored"));
 
 		cJSON_Delete(json_root);
 
@@ -292,12 +409,14 @@ private:
 		cJSON* json_interval = cJSON_GetObjectItem(json_root, "interval");
 		cJSON* json_damage = cJSON_GetObjectItem(json_root, "damage");
 		cJSON* json_view_range = cJSON_GetObjectItem(json_root, "view_range");
+		cJSON* json_soldier_attack_range = cJSON_GetObjectItem(json_root, "soldier_attack_range");
 		cJSON* json_cost = cJSON_GetObjectItem(json_root, "cost");
 		cJSON* json_upgrade_cost = cJSON_GetObjectItem(json_root, "upgrade_cost");
 
 		parse_array_helper(tpl.interval, 10, json_interval);
 		parse_array_helper(tpl.damage, 10, json_damage);
 		parse_array_helper(tpl.view_range, 10, json_view_range);
+		parse_array_helper(tpl.soldier_attack_range, 10, json_soldier_attack_range);
 		parse_array_helper(tpl.cost, 10, json_cost);
 		parse_array_helper(tpl.upgrade_cost, 9, json_upgrade_cost);
 
@@ -312,6 +431,8 @@ private:
 		cJSON* json_hp = cJSON_GetObjectItem(json_root, "hp");
 		cJSON* json_speed = cJSON_GetObjectItem(json_root, "speed");
 		cJSON* json_damage = cJSON_GetObjectItem(json_root, "damage");
+		cJSON* json_attack_damage = cJSON_GetObjectItem(json_root, "attack_damage");
+		cJSON* json_attack_range = cJSON_GetObjectItem(json_root, "attack_range");
 		cJSON* json_reward_ratio = cJSON_GetObjectItem(json_root, "reward_ratio");
 		cJSON* json_recover_interval = cJSON_GetObjectItem(json_root, "recover_interval");
 		cJSON* json_recover_range = cJSON_GetObjectItem(json_root, "recover_range");
@@ -323,6 +444,11 @@ private:
 			tpl.speed = json_speed->valuedouble;
 		if (json_damage && json_damage->type == cJSON_Number)
 			tpl.damage = json_damage->valuedouble;
+		tpl.attack_damage = tpl.damage;
+		if (json_attack_damage && json_attack_damage->type == cJSON_Number)
+			tpl.attack_damage = json_attack_damage->valuedouble;
+		if (json_attack_range && json_attack_range->type == cJSON_Number)
+			tpl.attack_range = json_attack_range->valuedouble;
 		if (json_reward_ratio && json_reward_ratio->type == cJSON_Number)
 			tpl.reward_ratio = json_reward_ratio->valuedouble;
 		if (json_recover_interval && json_recover_interval->type == cJSON_Number)

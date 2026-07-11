@@ -1,0 +1,32 @@
+[
+	{
+		"rewards": 80,
+		"interval": 1,
+		"spawn_list": [
+			{ "interval": 0.3, "point": 1, "enemy": "Slim" },
+			{ "interval": 0.7, "point": 1, "enemy": "Armored" },
+			{ "interval": 0.7, "point": 1, "enemy": "Goblin" }
+		]
+	},
+	{
+		"rewards": 95,
+		"interval": 4,
+		"spawn_list": [
+			{ "interval": 0.4, "point": 1, "enemy": "Silencer" },
+			{ "interval": 0.9, "point": 1, "enemy": "Slim" },
+			{ "interval": 0.7, "point": 1, "enemy": "Goblin" },
+			{ "interval": 0.7, "point": 1, "enemy": "Goblin" }
+		]
+	},
+	{
+		"rewards": 120,
+		"interval": 5,
+		"spawn_list": [
+			{ "interval": 0.4, "point": 1, "enemy": "Armored" },
+			{ "interval": 0.8, "point": 1, "enemy": "Skeleton" },
+			{ "interval": 0.9, "point": 1, "enemy": "Silencer" },
+			{ "interval": 0.9, "point": 1, "enemy": "Goblin" },
+			{ "interval": 1.2, "point": 1, "enemy": "KingSlim" }
+		]
+	}
+]

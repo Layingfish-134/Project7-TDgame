@@ -1,0 +1,29 @@
+[
+	{
+		"rewards": 60,
+		"interval": 1,
+		"spawn_list": [
+			{ "interval": 0.4, "point": 1, "enemy": "Slim" },
+			{ "interval": 1.2, "point": 1, "enemy": "Slim" }
+		]
+	},
+	{
+		"rewards": 70,
+		"interval": 4,
+		"spawn_list": [
+			{ "interval": 0.3, "point": 1, "enemy": "Slim" },
+			{ "interval": 0.9, "point": 1, "enemy": "Slim" },
+			{ "interval": 0.9, "point": 1, "enemy": "Goblin" }
+		]
+	},
+	{
+		"rewards": 90,
+		"interval": 5,
+		"spawn_list": [
+			{ "interval": 0.4, "point": 1, "enemy": "Goblin" },
+			{ "interval": 1.0, "point": 1, "enemy": "Slim" },
+			{ "interval": 1.0, "point": 1, "enemy": "Slim" },
+			{ "interval": 1.2, "point": 1, "enemy": "Skeleton" }
+		]
+	}
+]

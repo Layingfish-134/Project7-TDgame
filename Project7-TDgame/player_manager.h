@@ -226,6 +226,80 @@ public:
 		return mp;
 	}
 
+	const Vector2& get_position() const
+	{
+		return position;
+	}
+
+	const Vector2& get_size() const
+	{
+		return size;
+	}
+
+	Facing get_facing() const
+	{
+		return facing;
+	}
+
+	bool is_releasing_flash_now() const
+	{
+		return is_releasing_flash;
+	}
+
+	bool is_releasing_impact_now() const
+	{
+		return is_releasing_impact;
+	}
+
+	const SDL_Rect& get_flash_hitbox() const
+	{
+		return rect_hitbox_flash;
+	}
+
+	const SDL_Rect& get_impact_hitbox() const
+	{
+		return rect_hitbox_impact;
+	}
+
+	void set_move_state(bool left, bool right, bool up, bool down)
+	{
+		is_move_left = left;
+		is_move_right = right;
+		is_move_up = up;
+		is_move_down = down;
+	}
+
+	void trigger_normal_attack()
+	{
+		on_release_flash();
+	}
+
+	void trigger_skill()
+	{
+		on_release_impact();
+	}
+
+	void reset()
+	{
+		const SDL_Rect& rect_map = ConfigManager::instance()->rect_tile_map;
+		position.x = rect_map.x + rect_map.w / 2;
+		position.y = rect_map.y + rect_map.h / 2;
+		velocity = { 0, 0 };
+		speed = ConfigManager::instance()->player_template.speed;
+		mp = 100;
+		can_release_flash = true;
+		is_releasing_flash = false;
+		is_releasing_impact = false;
+		is_move_up = false;
+		is_move_down = false;
+		is_move_left = false;
+		is_move_right = false;
+		facing = Facing::Left;
+		anim_current = &anim_idle_right;
+		timer_release_flash_cd.restart();
+		timer_auto_increase_mp.restart();
+	}
+
 protected:
 	PlayerManager()
 	{
@@ -235,12 +309,12 @@ protected:
 			[&]()
 			{
 				double interval = ConfigManager::instance()->player_template.skill_interval;
-				mp = std::min(mp + 100 / (interval / 0.1), 100.0);
+				mp = (std::min)(mp + 100 / (interval / 0.1), 100.0);
 			});
 
 		timer_release_flash_cd.set_one_shot(true);
 		timer_release_flash_cd.set_wait_time(
-			ConfigManager::instance()->player_template.skill_interval);
+			ConfigManager::instance()->player_template.normal_attack_interval);
 		timer_release_flash_cd.set_on_timeout(
 			[&]()
 			{
@@ -319,13 +393,8 @@ protected:
 		anim_effect_impact_right.set_on_finished([&]()
 			{ is_releasing_impact = false; });
 
-		const SDL_Rect& rect_map = ConfigManager::instance()->rect_tile_map;
-		position.x = rect_map.x + rect_map.w / 2;
-		position.y = rect_map.y + rect_map.h / 2;
-
-		speed = ConfigManager::instance()->player_template.speed;
-
 		size.x = 96, size.y = 96;
+		reset();
 	}
 
 	~PlayerManager() = default;
@@ -413,6 +482,7 @@ private:
 		}
 
 		is_releasing_flash = true;
+		can_release_flash = false;
 		anim_effect_flash_current->reset();
 		timer_release_flash_cd.restart();
 

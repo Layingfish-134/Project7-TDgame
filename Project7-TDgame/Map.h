@@ -54,6 +54,8 @@ public:
 			return false;
 
 		tile_map = tile_map_temp;
+		spwaner_route_pool.clear();
+		idx_home = { 0 };
 
 		generate_map_cache();
 
@@ -91,6 +93,21 @@ public:
 	void place_tower(const SDL_Point& idx_tile)
 	{
 		tile_map[idx_tile.y][idx_tile.x].has_tower = true;
+	}
+
+	void remove_tower(const SDL_Point& idx_tile)
+	{
+		if (idx_tile.y < 0 || idx_tile.x < 0 ||
+			idx_tile.y >= (int)tile_map.size() || idx_tile.x >= (int)tile_map[idx_tile.y].size())
+			return;
+		tile_map[idx_tile.y][idx_tile.x].has_tower = false;
+	}
+
+	void clear_tower_flags()
+	{
+		for (auto& line : tile_map)
+			for (Tile& tile : line)
+				tile.has_tower = false;
 	}
 
 private:

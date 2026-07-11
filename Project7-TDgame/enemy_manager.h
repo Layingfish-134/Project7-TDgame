@@ -13,11 +13,16 @@
 #include"skeleton.h"
 #include"goblin.h"
 #include"goblin_priest.h"
+#include"boss_enemy.h"
+#include"silencer_enemy.h"
+#include"armored_enemy.h"
 
 
 #include<vector>
 #include<SDL.h>
 #include<iostream>
+#include<algorithm>
+#include<utility>
 class EnemyManager : public Manager<EnemyManager>
 {
 	friend class Manager<EnemyManager>;
@@ -27,8 +32,7 @@ public:
 	EnemyManager() = default;
 	~EnemyManager()
 	{
-		for (Enemy* enemy : enemy_list)
-			delete enemy;
+		clear();
 
 	}
 
@@ -36,6 +40,41 @@ public:
 	EnemyList& get_enemy_list()
 	{
 		return enemy_list;
+	}
+	void clear()
+	{
+		for (Enemy* enemy : enemy_list)
+			delete enemy;
+		enemy_list.clear();
+		pending_spawn_list.clear();
+	}
+	void reset_stats()
+	{
+		total_spawned = 0;
+		total_defeated = 0;
+		total_leaked = 0;
+		total_boss_summons = 0;
+		boss_appeared = false;
+	}
+	int get_total_spawned() const
+	{
+		return total_spawned;
+	}
+	int get_total_defeated() const
+	{
+		return total_defeated;
+	}
+	int get_total_leaked() const
+	{
+		return total_leaked;
+	}
+	int get_total_boss_summons() const
+	{
+		return total_boss_summons;
+	}
+	bool has_boss_appeared() const
+	{
+		return boss_appeared;
 	}
 public:
 	void on_update(double delta)
@@ -47,6 +86,7 @@ public:
 		process_collision_bulllet();
 
 		remove_invaild_enemy();
+		process_pending_spawns();
 	}
 
 	void on_render(SDL_Renderer* renderer)
@@ -61,9 +101,9 @@ public:
 public:
 	void spawn_enemy(EnemyType enemy_type,int idx_spawn_point)
 	{
-		static Vector2 position;
-		static const SDL_Rect& rect_tile_map = ConfigManager::instance()->rect_tile_map;
-		static const Map::SpawnerRoutePool& spawner_route_pool = ConfigManager::instance()->map.get_idx_spawner_pool();
+		Vector2 position;
+		const SDL_Rect& rect_tile_map = ConfigManager::instance()->rect_tile_map;
+		const Map::SpawnerRoutePool& spawner_route_pool = ConfigManager::instance()->map.get_idx_spawner_pool();
 		//计算敌人的初始生成位置，需要得到地图的世界坐标rect_tile_map、怪物逻辑路径route
 
 		const auto& iter = spawner_route_pool.find(idx_spawn_point);
@@ -90,36 +130,56 @@ public:
 			break;
 		case EnemyType::GoblinPriest:
 			enemy = new GoblinPriest();
+			enemy->set_on_skill_released([&](Enemy* enemy_src)
+				{
+					double recover_radius = enemy_src->get_recover_radius();
+					if (recover_radius < 0)
+						return;
+
+					const Vector2 position_src = enemy_src->get_position();
+					for (Enemy* enemy_dst : enemy_list)
+					{
+						const Vector2 position_dst = enemy_dst->get_position();
+						double distance = (position_dst - position_src).length();
+						if (distance <= recover_radius)
+							enemy_dst->increase_hp(enemy_src->get_recover_intensity());
+					}
+				});
+			break;
+		case EnemyType::Boss:
+		{
+			BossEnemy* boss = new BossEnemy();
+			boss->set_on_summon_requested([&](Enemy* enemy_src)
+				{
+					total_boss_summons++;
+					queue_spawn_enemy(EnemyType::Silm, 1);
+					queue_spawn_enemy(EnemyType::Goblin, 1);
+				});
+			enemy = boss;
+			boss_appeared = true;
+			break;
+		}
+		case EnemyType::Silencer:
+			enemy = new SilencerEnemy();
+			break;
+		case EnemyType::Armored:
+			enemy = new ArmoredEnemy();
 			break;
 		default:
 			enemy = new SlimEnemy();
 			break;
 		}
 
-		enemy->set_on_skill_released([&](Enemy* enemy_src)
-			{
-				double recover_radius = enemy_src->get_recover_radius();
-				if (recover_radius < 0)
-					return;
-
-				const Vector2 position_src = enemy_src->get_position();
-				for (Enemy* enemy_dst : enemy_list)
-				{
-					const Vector2 position_dst = enemy_dst->get_position();
-					double distance = (position_dst - position_src).length();
-					if (distance <= recover_radius)
-						enemy_dst->increase_hp(enemy_src->get_recover_intensity());
-				}
-			});
-
 		const Route::IdxList& route_idx_list = iter->second.get_idx_list();
 		position.x = rect_tile_map.x + route_idx_list[0].x * SIZE_TILE + SIZE_TILE/2;
 		position.y = rect_tile_map.y + route_idx_list[0].y * SIZE_TILE + SIZE_TILE/2;
 
+		enemy->set_enemy_type(enemy_type);
 		enemy->set_position(position);
 		enemy->set_route(&iter->second);
 
 		enemy_list.push_back(enemy);
+		total_spawned++;
 
 	}
 
@@ -127,7 +187,31 @@ public:
 	{
 		return enemy_list.empty();
 	}
+
+	bool has_enemy_type(EnemyType type) const
+	{
+		for (Enemy* enemy : enemy_list)
+			if (!enemy->can_remove() && enemy->get_enemy_type() == type)
+				return true;
+		return false;
+	}
+
+	void queue_spawn_enemy(EnemyType type, int idx_spawn_point)
+	{
+		pending_spawn_list.push_back(std::make_pair(type, idx_spawn_point));
+	}
 private:
+	void process_pending_spawns()
+	{
+		if (pending_spawn_list.empty())
+			return;
+
+		std::vector<std::pair<EnemyType, int>> spawns = pending_spawn_list;
+		pending_spawn_list.clear();
+		for (const std::pair<EnemyType, int>& spawn : spawns)
+			spawn_enemy(spawn.first, spawn.second);
+	}
+
 	void process_collision_home()
 	{
 		static const SDL_Point& point_home_idx = ConfigManager::instance()->map.get_home_idx();
@@ -148,6 +232,7 @@ private:
 				&& position_enemy.y >= position_home.y && position_enemy.y <= position_home.y + SIZE_TILE)
 			{
 				enemy->set_invaild();
+				total_leaked++;
 
 				HomeManager::instance()->decrease_hp(enemy->get_damage());
 			}
@@ -180,7 +265,7 @@ private:
 					double bullet_range_damage = bullet->get_damage_range();
 					if (bullet_range_damage < 0)
 					{
-						enemy->decrease_hp(bullet_damage);
+						enemy->decrease_hp(bullet_damage, bullet->can_break_armor());
 						if (enemy->can_remove())
 						{
 							try_spawn_coin_prop(pos_enemy,enemy->get_reward_ratio());
@@ -193,7 +278,7 @@ private:
 							const Vector2& pos_target_enemy = target_enemy->get_position();
 							if ((pos_target_enemy - pos_enemy).length() <= bullet_range_damage)
 							{
-								target_enemy->decrease_hp(bullet_damage);
+								target_enemy->decrease_hp(bullet_damage, bullet->can_break_armor());
 								if (target_enemy->can_remove())
 									try_spawn_coin_prop(pos_target_enemy,target_enemy->get_reward_ratio());
 							}
@@ -223,6 +308,8 @@ private:
 				bool can_delete = enemy->can_remove();
 				if (can_delete)
 				{
+					if (enemy->get_hp() <= 0)
+						EnemyManager::instance()->total_defeated++;
 					delete enemy;
 				}
 				return can_delete;
@@ -232,6 +319,12 @@ private:
 	}
 private:
 	EnemyList enemy_list;
+	std::vector<std::pair<EnemyType, int>> pending_spawn_list;
+	int total_spawned = 0;
+	int total_defeated = 0;
+	int total_leaked = 0;
+	int total_boss_summons = 0;
+	bool boss_appeared = false;
 };
 
 

@@ -22,10 +22,10 @@ public:
 		animation.set_interval(0.1);
 		animation.set_frame_data(tex_shell, 2, 1, idx_list_shell);
 
-		animation.set_loop(false);
-		animation.set_interval(0.1);
-		animation.set_frame_data(tex_explode, 5, 1, idx_list_explode);
-		animation.set_on_finished([&]()
+		animation_explode.set_loop(false);
+		animation_explode.set_interval(0.1);
+		animation_explode.set_frame_data(tex_explode, 5, 1, idx_list_explode);
+		animation_explode.set_on_finished([&]()
 			{
 				this->set_invaild();
 			});
@@ -43,6 +43,7 @@ public:
 		Mix_PlayChannel(-1, sound_pool.find(ResID::Sound_ShellHit)->second, 0);
 
 		this->disable_collided();
+		animation_explode.reset();
 	}
 
 	void on_update(double delta) override

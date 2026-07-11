@@ -18,12 +18,23 @@ public:
 		return num_hp;
 	}
 
+	void reset()
+	{
+		num_hp = ConfigManager::instance()->num_init_hp;
+	}
+
 	void decrease_hp(double val)
 	{
 		num_hp -= val;
 
 		if (num_hp < 0)
 			num_hp = 0;
+
+		if (num_hp <= 0)
+		{
+			ConfigManager::instance()->is_game_over = true;
+			ConfigManager::instance()->is_game_win = false;
+		}
 
 		static const ResourcesManager::SoundPool& sound_pool = ResourcesManager::instance()->get_sound_pool();
 

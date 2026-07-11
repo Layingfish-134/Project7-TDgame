@@ -3,5 +3,6 @@ enum TowerType
 {
 	Archer,
 	Axeman,
-	Gunner
+	Gunner,
+	Barracks
 };

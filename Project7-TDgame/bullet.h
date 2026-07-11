@@ -3,6 +3,7 @@
 #include"animation.h"
 #include"config_manager.h"
 #include"enemy.h"
+#include"bullet_type.h"
 
 class Bullet
 {
@@ -33,10 +34,35 @@ public:
 		damage = val;
 	}
 
+	void set_armor_break(bool val)
+	{
+		armor_break = val;
+	}
+
+	void set_slow_factor(double val)
+	{
+		slow_factor = val;
+	}
+
+	void set_slow_duration(double val)
+	{
+		slow_duration = val;
+	}
+
+	void set_damage_range(double val)
+	{
+		damage_range = val;
+	}
+
 	void set_invaild()
 	{
 		is_vaild = false;
 		is_collisional = false;
+	}
+
+	void set_bullet_type(BulletType type)
+	{
+		bullet_type = type;
 	}
 
 	void disable_collided()
@@ -55,6 +81,16 @@ public:
 		return position;
 	}
 
+	const Vector2& get_velocity() const
+	{
+		return velocity;
+	}
+
+	BulletType get_bullet_type() const
+	{
+		return bullet_type;
+	}
+
 	double get_damage() const
 	{
 		return damage;
@@ -63,6 +99,21 @@ public:
 	double get_damage_range() const
 	{
 		return damage_range;
+	}
+
+	bool can_break_armor() const
+	{
+		return armor_break;
+	}
+
+	double get_slow_factor() const
+	{
+		return slow_factor;
+	}
+
+	double get_slow_duration() const
+	{
+		return slow_duration;
 	}
 
 	bool can_collided() const
@@ -119,6 +170,10 @@ protected:
 
 	double damage = 0;
 	double damage_range = -1;
+	BulletType bullet_type = BulletType::Arrow;
+	bool armor_break = false;
+	double slow_factor = 1.0;
+	double slow_duration = 0;
 private:
 	bool is_collisional = true;
 	bool is_vaild = true;

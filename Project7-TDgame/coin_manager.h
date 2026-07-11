@@ -16,8 +16,7 @@ public:
 	}
 	~CoinManager()
 	{
-		for (CoinProp* coin_prop : coin_prop_list)
-			delete coin_prop;
+		clear_props();
 	}
 
 public:
@@ -74,6 +73,19 @@ public:
 		coin_prop->set_position(spawn_pos);
 
 		coin_prop_list.push_back(coin_prop);
+	}
+
+	void reset()
+	{
+		clear_props();
+		num_coin = ConfigManager::instance()->num_init_coin;
+	}
+
+	void clear_props()
+	{
+		for (CoinProp* coin_prop : coin_prop_list)
+			delete coin_prop;
+		coin_prop_list.clear();
 	}
 private:
 	double num_coin = 0;

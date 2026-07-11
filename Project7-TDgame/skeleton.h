@@ -56,6 +56,8 @@ public:
 		max_hp = skeleton_template.hp;
 		max_speed = skeleton_template.speed;
 		damage = skeleton_template.damage;
+		attack_damage = skeleton_template.attack_damage;
+		attack_range = skeleton_template.attack_range;
 		recover_intensity = skeleton_template.recover_intensity;
 		recover_interval = skeleton_template.recover_interval;
 		recover_range = skeleton_template.recover_range;

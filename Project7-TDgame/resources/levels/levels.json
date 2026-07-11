@@ -1,0 +1,38 @@
+[
+	{
+		"id": 1,
+		"name": "Level 1 - Village Gate",
+		"description": "A short warm-up at the village entrance.",
+		"objective": "Clear 3 light waves",
+		"difficulty": "Easy",
+		"target_time": 95,
+		"star_home_hp": 8,
+		"star_coin": 120,
+		"map": "resources/levels/level_01/map.csv",
+		"wave": "resources/levels/level_01/level.json"
+	},
+	{
+		"id": 2,
+		"name": "Level 2 - Twin Roads",
+		"description": "More enemies arrive in tighter groups.",
+		"objective": "Hold through mixed raids",
+		"difficulty": "Normal",
+		"target_time": 125,
+		"star_home_hp": 7,
+		"star_coin": 150,
+		"map": "resources/levels/level_02/map.csv",
+		"wave": "resources/levels/level_02/level.json"
+	},
+	{
+		"id": 3,
+		"name": "Level 3 - Last Stand",
+		"description": "A boss slime leads the final push.",
+		"objective": "Defeat the boss wave",
+		"difficulty": "Hard",
+		"target_time": 155,
+		"star_home_hp": 6,
+		"star_coin": 180,
+		"map": "resources/levels/level_03/map.csv",
+		"wave": "resources/levels/level_03/level.json"
+	}
+]

@@ -57,6 +57,8 @@ public:
 		max_hp = slim_template.hp;
 		max_speed = slim_template.speed;
 		damage = slim_template.damage;
+		attack_damage = slim_template.attack_damage;
+		attack_range = slim_template.attack_range;
 		recover_intensity = slim_template.recover_intensity;
 		recover_interval = slim_template.recover_interval;
 		recover_range = slim_template.recover_range;

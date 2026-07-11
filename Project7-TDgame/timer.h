@@ -18,6 +18,21 @@ public:
 		wait_time = val;
 	}
 
+	double get_wait_time() const
+	{
+		return wait_time;
+	}
+
+	double get_pass_time() const
+	{
+		return pass_time;
+	}
+
+	double get_remaining_time() const
+	{
+		return wait_time > pass_time ? wait_time - pass_time : 0;
+	}
+
 	void set_one_shot(bool flag)
 	{
 		one_shot = flag;

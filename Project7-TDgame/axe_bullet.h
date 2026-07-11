@@ -39,7 +39,10 @@ public:
 			break;
 		}
 
-		enemy->slow_down();
+		if (get_slow_duration() > 0)
+			enemy->slow_down(get_slow_factor(), get_slow_duration());
+		else
+			enemy->slow_down();
 
 		Bullet::on_collide(enemy);
 	}

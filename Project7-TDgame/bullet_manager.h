@@ -41,7 +41,8 @@ public:
 	}
 
 public:
-	void fire_bullet(BulletType type,Vector2 position,Vector2 velocity,double damage)//用于生成子弹对象
+	void fire_bullet(BulletType type,Vector2 position,Vector2 velocity,double damage,
+		bool armor_break = false, double slow_factor = 1.0, double slow_duration = 0, double damage_range_override = -2)//用于生成子弹对象
 	{
 		Bullet* bullet = nullptr;
 		switch (type)
@@ -63,7 +64,13 @@ public:
 
 		bullet->set_position(position);
 		bullet->set_damage(damage);
+		bullet->set_bullet_type(type);
 		bullet->set_velocity(velocity);
+		bullet->set_armor_break(armor_break);
+		bullet->set_slow_factor(slow_factor);
+		bullet->set_slow_duration(slow_duration);
+		if (damage_range_override >= -1)
+			bullet->set_damage_range(damage_range_override);
 
 		bullet_list.push_back(bullet);
 	}
@@ -74,12 +81,18 @@ public:
 		return bullet_list;
 	}
 
+	void clear()
+	{
+		for (Bullet* bullet : bullet_list)
+			delete bullet;
+		bullet_list.clear();
+	}
+
 public:
 	BulletManager() = default;
 	~BulletManager()
 	{
-		for (Bullet* bullet : bullet_list)
-			delete bullet;
+		clear();
 	}
 
 private:
